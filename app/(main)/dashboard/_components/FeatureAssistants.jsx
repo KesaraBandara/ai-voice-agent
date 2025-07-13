@@ -6,6 +6,7 @@ import Image from "next/image";
 import React from "react";
 import { CoachingOptions } from "@/services/Options";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import UserInputDialog from "./UserInputDialog";
 
 function FeatureAssistants() {
   const user = useUser();
@@ -30,14 +31,22 @@ function FeatureAssistants() {
               className="p-3 bg-secondary rounded-3xl flex flex-col
                      justify-center items-center cursor-pointer"
             >
-              <Image
-                src={option.icon}
-                alt={option.name}
-                width={150}
-                height={150}
-                className="h-[70px] w-[70px] hover:rotate-20 cursor-pointer transition-all"
-              />
-              <h2 className="mt-2">{option.name}</h2>
+            <UserInputDialog coachingOption={option}>
+              <div
+                key={index}
+                className="p-3 bg-secondary rounded-3xl flex flex-col
+                     justify-center items-center cursor-pointer"
+              >
+                <Image
+                  src={option.icon}
+                  alt={option.name}
+                  width={150}
+                  height={150}
+                  className="h-[70px] w-[70px] hover:rotate-20 cursor-pointer transition-all"
+                />
+                <h2 className="mt-2">{option.name}</h2>
+              </div>
+            </UserInputDialog>
             </div>
           </BlurFade>
         ))}
