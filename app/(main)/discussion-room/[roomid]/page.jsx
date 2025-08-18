@@ -7,6 +7,7 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { UserButton } from "@stackframe/stack";
 import { Button } from "@/components/ui/button";
+import RecordRTC from "recordrtc";
 
 function DiscussionRoom() {
   const { roomid } = useParams();
@@ -14,6 +15,8 @@ function DiscussionRoom() {
     id: roomid,
   });
   const [expert, setExpert] = useState();
+  const [enableMic, setEnableMic] = useState(false);
+  const recorder = useRef(null);
 
   useEffect(() => {
     if (DiscussionRoomData) {
@@ -24,6 +27,44 @@ function DiscussionRoom() {
       setExpert(Expert);
     }
   }, [DiscussionRoomData]);
+
+  const connectToServer = () => {
+    if (typeof window !== "undefined" && typeof navigator !== "undefined") {
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+
+        .then((stream) => {
+          recorder.current = new RecordRTC(stream, {
+            type: "audio",
+            mimeType: "audio/webm;codecs=pcm",
+            recorderType: RecordRTC.StereoAudioRecorder,
+            timeSlice: 250,
+            desiredSampRate: 16000,
+            numberOfAudioChannels: 1,
+            bufferSize: 4096,
+            audioBitsPerSecond: 128000,
+            ondataavailable: async (blob) => {
+              // if (!realtimeTranscriber.current) return;
+              // Reset the silence detection timer on audio input
+              clearTimeout(silenceTimeout);
+              const buffer = await blob.arrayBuffer();
+              //console.log(buffer)
+              // Restart the silence detection timer
+              silenceTimeout = setTimeout(() => {
+                console.log("User stopped talking");
+                // Handle user stopped talking (e.g., send final transcript, stop recording, etc.)
+              }, 2000);
+            },
+          });
+
+          recorder.current.startRecording();
+        })
+
+        .catch((err) => console.error(err));
+    }
+  };
+
+  const disconnect = async (e) => {};
   return (
     <div className="-mt-12">
       <h2 className="text-lg font-bold">
@@ -48,7 +89,20 @@ function DiscussionRoom() {
             </div>
           </div>
           <div className="mt-5 flex items-center justify-center">
-            <Button>connect</Button>
+            {!enableMic ? (
+              <Button onClick={connectToServer} disabled={loading}>
+                {loading && <Loader2Icon className="animate-spin" />} Connect
+              </Button>
+            ) : (
+              <Button
+                variant="destructive"
+                onClick={disconnect}
+                disabled={loading}
+              >
+                {loading && <Loader2Icon className="animate-spin" />}
+                Disconnect
+              </Button>
+            )}
           </div>
         </div>
         <div>
