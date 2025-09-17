@@ -22,6 +22,7 @@ function DiscussionRoom() {
   const [enableMic, setEnableMic] = useState(false);
   const recorder = useRef(null);
   const realtimeTranscriber = useRef(null);
+  const [conversation, setConversation] = useState([]);
   const [loading, setLoading] = useState(false);
   const [transcribe, setTranscribe] = useState();
 
@@ -51,6 +52,14 @@ function DiscussionRoom() {
     realtimeTranscriber.current.on('transcript', async (transcript) => {
       console.log(transcript); 
             let msg = ''
+                if (transcript.message_type == 'FinalTranscript') {
+                setConversation(prev => [...prev, {
+                    role: 'user',
+                    content: transcript.text
+                }]);
+                await updateUserTokenMathod(transcript.text);// Update user generate Token
+            }
+
             texts[transcript.audio_start] = transcript?.text;
             const keys = Object.keys(texts);
             keys.sort((a, b) => a - b);
