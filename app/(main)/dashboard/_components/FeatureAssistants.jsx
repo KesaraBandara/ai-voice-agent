@@ -1,7 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { useUser } from "@stackframe/stack";
-
 import Image from "next/image";
 import React from "react";
 import { CoachingOptions } from "@/services/Options";
