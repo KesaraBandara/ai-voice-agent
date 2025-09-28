@@ -8,7 +8,8 @@ import Image from "next/image";
 import { UserButton } from "@stackframe/stack";
 import { RealtimeTranscriber } from "assemblyai";
 import { Button } from "@/components/ui/button";
-import { getToken } from "@/services/GlobalServices";
+import { Loader2Icon } from 'lucide-react';
+import { AIModel, getToken } from "@/services/GlobalServices";
 //import RecordRTC from "recordrtc";
 // import RecordRTC from "recordrtc";
 // const RecordRTC = dynamic(() => import("recordrtc"), { ssr: false });
@@ -35,13 +36,14 @@ function DiscussionRoom() {
       const Expert = CoachingExpert.find(
         (item) => item.name == DiscussionRoomData.expertName
       );
-      console.log(Expert);
+      // console.log(Expert);
       setExpert(Expert);
     }
   }, [DiscussionRoomData]);
 
   const connectToServer = async () => {
     setEnableMic(true);
+    setLoading(true);
 
     //Init Assembly AI
     realtimeTranscriber.current = new RealtimeTranscriber({
@@ -50,14 +52,21 @@ function DiscussionRoom() {
     });
             
     realtimeTranscriber.current.on('transcript', async (transcript) => {
-      console.log(transcript); 
+      // console.log(transcript); 
             let msg = ''
                 if (transcript.message_type == 'FinalTranscript') {
                 setConversation(prev => [...prev, {
                     role: 'user',
                     content: transcript.text
                 }]);
-                await updateUserTokenMathod(transcript.text);// Update user generate Token
+                // await updateUserTokenMathod(transcript.text);// Update user generate Token
+                const aiResp=await AIModel(
+                  DiscussionRoomData.topic,
+                  DiscussionRoomData.coachingOption,
+                  transcript.text);
+                  console.log(aiResp);
+                  setConversation
+                  setConversation(prev => [...prev, aiResp])
             }
 
             texts[transcript.audio_start] = transcript?.text;
@@ -74,6 +83,7 @@ function DiscussionRoom() {
 
 
     await realtimeTranscriber.current.connect();
+    setLoading(false);
     if (typeof window !== "undefined" && typeof navigator !== "undefined") {
       const RecordRTC = (await import("recordrtc")).default; //Importing here
       navigator.mediaDevices.getUserMedia({ audio: true })
@@ -92,7 +102,7 @@ function DiscussionRoom() {
               // Reset the silence detection timer on audio input
               clearTimeout(silenceTimeout);
               const buffer = await blob.arrayBuffer();
-              console.log(buffer)
+              // console.log(buffer)
               realtimeTranscriber.current.sendAudio(buffer);
               // Restart the silence detection timer
               silenceTimeout = setTimeout(() => {
@@ -108,13 +118,12 @@ function DiscussionRoom() {
   };
 const disconnect = async (e) => {
             e.preventDefault();
+            setLoading(true);
             await realtimeTranscriber.current.close();
             recorder.current.pauseRecording();
             recorder.current = null;
             setEnableMic(false);
-
-
-
+            setLoading(false);
 
 }
 
