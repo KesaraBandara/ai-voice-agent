@@ -10,6 +10,7 @@ import { RealtimeTranscriber } from "assemblyai";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon } from 'lucide-react';
 import { AIModel, getToken } from "@/services/GlobalServices";
+import ChatBox from "./_components/ChatBox";
 //import RecordRTC from "recordrtc";
 // import RecordRTC from "recordrtc";
 // const RecordRTC = dynamic(() => import("recordrtc"), { ssr: false });
@@ -26,6 +27,8 @@ function DiscussionRoom() {
   const [conversation, setConversation] = useState([]);
   const [loading, setLoading] = useState(false);
   const [transcribe, setTranscribe] = useState();
+  const [enableFeedbackNotes, setEnableFeedbackNotes] = useState(false);
+
 
 
   let silenceTimeout;
@@ -60,12 +63,17 @@ function DiscussionRoom() {
                     content: transcript.text
                 }]);
                 // await updateUserTokenMathod(transcript.text);// Update user generate Token
-                const aiResp=await AIModel(
+                
+                
+                //callin AI text model to get response 
+                  const lastTwoMsg = conversation.slice(-8);
+                  const aiResp=await AIModel(
                   DiscussionRoomData.topic,
                   DiscussionRoomData.coachingOption,
-                  transcript.text);
+                  lastTwoMsg);
+                  
                   console.log(aiResp);
-                  setConversation
+                  //setConversation
                   setConversation(prev => [...prev, aiResp])
             }
 
@@ -167,19 +175,10 @@ const disconnect = async (e) => {
             }
           </div>
         </div>
-        <div>
-          <div
-            className=" h-[60vh] bg-secondary border rounded-4xl
-                flex flex-col items-center justify-center relative
-                "
-          >
-            <h2> chat section</h2>
-          </div>
-          <h2 className="mt-4 text-gray-400 text-sm">
-            At the end of your conversation we will automatically generate
-            feedback/notes from your conversation
-          </h2>
-        </div>
+                    <ChatBox conversation={conversation}
+                        enableFeedbackNotes={enableFeedbackNotes}
+                        coachingOption={DiscussionRoomData?.coachingOption}
+                    />
       </div>
       <div>
         <h2>{transcribe}</h2>
