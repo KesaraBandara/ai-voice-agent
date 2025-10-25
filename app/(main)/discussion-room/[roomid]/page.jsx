@@ -8,8 +8,12 @@ import Image from "next/image";
 import { UserButton } from "@stackframe/stack";
 import { RealtimeTranscriber } from "assemblyai";
 import { Button } from "@/components/ui/button";
-import { Loader2Icon } from 'lucide-react';
-import { AIModel, getToken } from "@/services/GlobalServices";
+import { Loader2Icon } from "lucide-react";
+import {
+  AIModel,
+  ConvertTextToSpeech,
+  getToken,
+} from "@/services/GlobalServices";
 import ChatBox from "./_components/ChatBox";
 //import RecordRTC from "recordrtc";
 // import RecordRTC from "recordrtc";
@@ -28,8 +32,7 @@ function DiscussionRoom() {
   const [loading, setLoading] = useState(false);
   const [transcribe, setTranscribe] = useState();
   const [enableFeedbackNotes, setEnableFeedbackNotes] = useState(false);
-
-
+  const [audioUrl, setAudioUrl] = useState();
 
   let silenceTimeout;
   let texts = {};
@@ -53,48 +56,46 @@ function DiscussionRoom() {
       token: await getToken(),
       sample_rate: 16_000,
     });
-            
-    realtimeTranscriber.current.on('transcript', async (transcript) => {
-      // console.log(transcript); 
-            let msg = ''
-                if (transcript.message_type == 'FinalTranscript') {
-                setConversation(prev => [...prev, {
+
+    realtimeTranscriber.current.on("transcript", async (transcript) => {
+      // console.log(transcript);
+      let msg = "";
+
+
+      if (transcript.message_type == 'FinalTranscript') {
+            setConversation(prev => [...prev, {
                     role: 'user',
-                    content: transcript.text
-                }]);
-                // await updateUserTokenMathod(transcript.text);// Update user generate Token
-                
-                
-                //callin AI text model to get response 
-                  const lastTwoMsg = conversation.slice(-8);
-                  const aiResp=await AIModel(
-                  DiscussionRoomData.topic,
-                  DiscussionRoomData.coachingOption,
-                  lastTwoMsg);
-                  
-                  console.log(aiResp);
-                  //setConversation
-                  setConversation(prev => [...prev, aiResp])
-            }
+                    content: transcript.text}]);
 
-            texts[transcript.audio_start] = transcript?.text;
-            const keys = Object.keys(texts);
-            keys.sort((a, b) => a - b);
+                    //Calling AI text model to Get Response
+                    const lastTwoMsg = conversation.slice(-2);
+                    const aiResp = await AIModel(
+                      DiscussionRoomData.topic,
+                      DiscussionRoomData.coachingOption,
+                      lastTwoMsg);
 
-            for (const key of keys) {
-                if (texts[key]) {
-                    msg += `${texts[key]}`
-                }
-            }
-             setTranscribe(msg);
-    })
+                      console.log(aiResp);
+                      setConversation(prev =>[...prev, aiResp])
+      }
 
+      texts[transcript.audio_start] = transcript?.text;
+      const keys = Object.keys(texts);
+      keys.sort((a, b) => a - b);
+
+      for (const key of keys) {
+        if (texts[key]) {
+          msg += `${texts[key]}`;
+        }
+      }
+      setTranscribe(msg);
+    });
 
     await realtimeTranscriber.current.connect();
     setLoading(false);
     if (typeof window !== "undefined" && typeof navigator !== "undefined") {
       const RecordRTC = (await import("recordrtc")).default; //Importing here
-      navigator.mediaDevices.getUserMedia({ audio: true })
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
         .then((stream) => {
           recorder.current = new RecordRTC(stream, {
             type: "audio",
@@ -106,7 +107,7 @@ function DiscussionRoom() {
             bufferSize: 4096,
             audioBitsPerSecond: 128000,
             ondataavailable: async (blob) => {
-             if (!realtimeTranscriber.current) return;
+              if (!realtimeTranscriber.current) return;
               // Reset the silence detection timer on audio input
               clearTimeout(silenceTimeout);
               const buffer = await blob.arrayBuffer();
@@ -124,16 +125,45 @@ function DiscussionRoom() {
         .catch((err) => console.error(err));
     }
   };
-const disconnect = async (e) => {
-            e.preventDefault();
-            setLoading(true);
-            await realtimeTranscriber.current.close();
-            recorder.current.pauseRecording();
-            recorder.current = null;
-            setEnableMic(false);
-            setLoading(false);
 
-}
+  useEffect(() => {
+    // clearTimeout(waitForPause);
+    async function fetchData() {
+      if (conversation[conversation.length - 1]?.role == "user") {
+        // Calling AI text Model to Get Response
+        const lastTwoMsg = conversation.slice(-2);
+        const aiResp = await AIModel(
+          DiscussionRoomData.topic,
+          DiscussionRoomData.coachingOption,
+          lastTwoMsg
+        );
+
+        const url = await ConvertTextToSpeech(
+          aiResp.content,
+          DiscussionRoomData.expertName
+        );
+        console.log(url);
+         setAudioUrl(url);
+         setConversation(prev => [...prev, aiResp]);
+
+        setConversation((prev) => [...prev, aiResp])
+      }
+    }
+
+
+      fetchData();
+
+  }, [conversation]);
+
+  const disconnect = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    await realtimeTranscriber.current.close();
+    recorder.current.pauseRecording();
+    recorder.current = null;
+    setEnableMic(false);
+    setLoading(false);
+  };
 
   return (
     <div className="-mt-12">
@@ -154,16 +184,18 @@ const disconnect = async (e) => {
               className="h-[80px] w-[80px] rounded-full object-cover animate-pulse"
             />
             <h2 className="text-gray-500">{expert?.name}</h2>
+            <audio src={audioUrl} type="audio/mp3" autoPlay />
+
             <div className="p-5 bg-gray-200 px-10 rounded-lg absolute bottom-10 right-10">
               <UserButton />
             </div>
           </div>
           <div className="mt-5 flex items-center justify-center">
-            {!enableMic ? 
+            {!enableMic ? (
               <Button onClick={connectToServer} disabled={loading}>
                 {loading && <Loader2Icon className="animate-spin" />} Connect
               </Button>
-             : 
+            ) : (
               <Button
                 variant="destructive"
                 onClick={disconnect}
@@ -172,13 +204,14 @@ const disconnect = async (e) => {
                 {loading && <Loader2Icon className="animate-spin" />}
                 Disconnect
               </Button>
-            }
+            )}
           </div>
         </div>
-                    <ChatBox conversation={conversation}
-                        enableFeedbackNotes={enableFeedbackNotes}
-                        coachingOption={DiscussionRoomData?.coachingOption}
-                    />
+        <ChatBox
+          conversation={conversation}
+          enableFeedbackNotes={enableFeedbackNotes}
+          coachingOption={DiscussionRoomData?.coachingOption}
+        />
       </div>
       <div>
         <h2>{transcribe}</h2>
