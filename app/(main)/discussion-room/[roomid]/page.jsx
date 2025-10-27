@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 
 function DiscussionRoom() {
   const { roomid } = useParams();
+  const { userData, setUserData } = useContext(UserContext);
   const DiscussionRoomData = useQuery(api.DiscussionRoom.GetDiscussionRoom, {
     id: roomid,
   });
@@ -36,9 +37,10 @@ function DiscussionRoom() {
   const [enableFeedbackNotes, setEnableFeedbackNotes] = useState(false);
   const [audioUrl, setAudioUrl] = useState();
   const UpdateConversation = useMutation(api.DiscussionRoom.UpdateConversation)
-
+  const updateUserToken = useMutation(api.users.UpdateUserToken)
 
   let silenceTimeout;
+  let waitForPause;
   let texts = {};
 
   useEffect(() => {
@@ -61,26 +63,16 @@ function DiscussionRoom() {
       sample_rate: 16_000,
     });
 
-    realtimeTranscriber.current.on("transcript", async (transcript) => {
-      // console.log(transcript);
-      let msg = "";
-
-
-      if (transcript.message_type == 'FinalTranscript') {
-            setConversation(prev => [...prev, {
+ realtimeTranscriber.current.on('transcript', async (transcript) => {
+            let msg = ''
+            if (transcript.message_type == 'FinalTranscript') {
+                setConversation(prev => [...prev, {
                     role: 'user',
-                    content: transcript.text}]);
+                    content: transcript.text
+                }]);
+                await updateUserTokenMathod(transcript.text);// Update user generate Token
+            }
 
-                    //Calling AI text model to Get Response
-                    const lastTwoMsg = conversation.slice(-2);
-                    const aiResp = await AIModel(
-                      DiscussionRoomData.topic,
-                      DiscussionRoomData.coachingOption,
-                      lastTwoMsg);
-
-                      console.log(aiResp);
-                      setConversation(prev =>[...prev, aiResp])
-      }
 
       texts[transcript.audio_start] = transcript?.text;
       const keys = Object.keys(texts);
@@ -144,22 +136,22 @@ function DiscussionRoom() {
           lastTwoMsg
         );
 
-        const url = await ConvertTextToSpeech(
-          aiResp.content,
-          DiscussionRoomData.expertName
-        );
-        console.log(url);
-         setAudioUrl(url);
-         setConversation(prev => [...prev, aiResp]);
+                const url = await ConvertTextToSpeech(aiResp.content, DiscussionRoomData.expertName);
+                console.log(url)
+                setAudioUrl(url);
+                setConversation(prev => [...prev, aiResp]);
+                await updateUserTokenMathod(aiResp.content);// Update AI generated TOKEN
+            }
+        }
 
-        setConversation((prev) => [...prev, aiResp])
-      }
-    }
+        waitForPause = setTimeout(() => {
+            console.log('WAIT...')
+            fetchData()
+        }, 800)
+        console.log(conversation)
+    }, [conversation])
 
 
-      fetchData();
-
-  }, [conversation]);
 
   const disconnect = async (e) => {
     e.preventDefault();
@@ -178,6 +170,19 @@ function DiscussionRoom() {
     setEnableFeedbackNotes(true);
 
   };
+
+      const updateUserTokenMathod = async (text) => {
+        const tokenCount = text.trim() ? text.trim().split(/\s+/).length : 0
+        const result = await updateUserToken({
+            id: userData._id,
+            credits: Number(userData.credits) - Number(tokenCount)
+        })
+
+        setUserData(prev => ({
+            ...prev,
+            credits: Number(userData.credits) - Number(tokenCount)
+        }))
+    }
 
   return (
     <div className="-mt-12">
