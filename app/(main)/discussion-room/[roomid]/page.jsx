@@ -15,6 +15,8 @@ import {
   getToken,
 } from "@/services/GlobalServices";
 import ChatBox from "./_components/ChatBox";
+import { toast } from 'sonner';
+
 //import RecordRTC from "recordrtc";
 // import RecordRTC from "recordrtc";
 // const RecordRTC = dynamic(() => import("recordrtc"), { ssr: false });
@@ -33,6 +35,8 @@ function DiscussionRoom() {
   const [transcribe, setTranscribe] = useState();
   const [enableFeedbackNotes, setEnableFeedbackNotes] = useState(false);
   const [audioUrl, setAudioUrl] = useState();
+  const UpdateConversation = useMutation(api.DiscussionRoom.UpdateConversation)
+
 
   let silenceTimeout;
   let texts = {};
@@ -92,6 +96,8 @@ function DiscussionRoom() {
 
     await realtimeTranscriber.current.connect();
     setLoading(false);
+    setEnableMic(true);
+    toast('Connected...')
     if (typeof window !== "undefined" && typeof navigator !== "undefined") {
       const RecordRTC = (await import("recordrtc")).default; //Importing here
       navigator.mediaDevices
@@ -162,7 +168,15 @@ function DiscussionRoom() {
     recorder.current.pauseRecording();
     recorder.current = null;
     setEnableMic(false);
+    toast('Disconnected');
+       await UpdateConversation({
+      id: DiscussionRoomData._id,
+      conversation: conversation
+      })
+      
     setLoading(false);
+    setEnableFeedbackNotes(true);
+
   };
 
   return (

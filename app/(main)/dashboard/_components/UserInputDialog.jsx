@@ -25,6 +25,7 @@ function UserInputDialog({ children, coachingOption }) {
   const [loading, setLoading] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
   const router = useRouter();
+  const { userData } = useContext(UserContext);
 
   const OnClickNext = async () => {
     setLoading(true);
@@ -32,6 +33,7 @@ function UserInputDialog({ children, coachingOption }) {
       topic: topic,
       coachingOption: coachingOption?.name,
       expertName: selectedExpert,
+      uid: userData._id
     });
     setLoading(false);
     setOpenDialog(false);
