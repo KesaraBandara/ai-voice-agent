@@ -19,6 +19,7 @@
     "clsx": "^2.1.1",
     "convex": "^1.25.2",
     "lucide-react": "^0.515.0",
+    "moment": "^2.30.1",
     "motion": "^12.23.3",
     "next": "15.3.3",
     "node-record-lpcm16": "^1.0.1",
