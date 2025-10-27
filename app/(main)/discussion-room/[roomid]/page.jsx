@@ -1,9 +1,9 @@
 "use client";
 import { api } from "@/convex/_generated/api";
 import { CoachingExpert } from "@/services/Options";
-import { useQuery } from "convex/react";
+import { useQuery,useMutation } from "convex/react";
 import { useParams } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useContext, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { UserButton } from "@stackframe/stack";
 import { RealtimeTranscriber } from "assemblyai";
@@ -16,6 +16,8 @@ import {
 } from "@/services/GlobalServices";
 import ChatBox from "./_components/ChatBox";
 import { toast } from 'sonner';
+import { UserContext } from '@/app/_context/UserContext';
+import Webcam from 'react-webcam';
 
 //import RecordRTC from "recordrtc";
 // import RecordRTC from "recordrtc";
@@ -42,6 +44,16 @@ function DiscussionRoom() {
   let silenceTimeout;
   let waitForPause;
   let texts = {};
+
+  const [isCameraEnabled, setIsCameraEnabled] = useState(null);
+
+      //Check if camera enabled or not
+    useEffect(() => {
+        navigator.mediaDevices
+            .getUserMedia({ video: true })
+            .then(() => setIsCameraEnabled(true))
+            .catch(() => setIsCameraEnabled(false));
+    }, []);
 
   useEffect(() => {
     if (DiscussionRoomData) {
@@ -125,7 +137,7 @@ function DiscussionRoom() {
   };
 
   useEffect(() => {
-    // clearTimeout(waitForPause);
+    clearTimeout(waitForPause);
     async function fetchData() {
       if (conversation[conversation.length - 1]?.role == "user") {
         // Calling AI text Model to Get Response
@@ -191,24 +203,25 @@ function DiscussionRoom() {
       </h2>
       <div className="mt-5 grid grid-cols-1 lg:grid-cols-3 gap-10">
         <div className="lg:col-span-2">
-          <div
-            className="h-[60vh] bg-secondary border rounded-4xl
-                flex flex-col items-center justify-center relative"
-          >
-            <Image
-              src={expert?.avatar}
-              alt="Avatar"
-              width={200}
-              height={200}
-              className="h-[80px] w-[80px] rounded-full object-cover animate-pulse"
-            />
-            <h2 className="text-gray-500">{expert?.name}</h2>
-            <audio src={audioUrl} type="audio/mp3" autoPlay />
+                    <div className=' h-[60vh] bg-secondary border rounded-4xl
+                flex flex-col items-center justify-center relative
+                '>
+                        {expert?.avatar && <Image src={expert?.avatar} alt='Avatar' width={200} height={200}
+                            className='h-[80px] w-[80px] rounded-full object-cover animate-pulse'
+                        />}
+                        <h2 className='text-gray-500'>{expert?.name}</h2>
 
-            <div className="p-5 bg-gray-200 px-10 rounded-lg absolute bottom-10 right-10">
-              <UserButton />
-            </div>
-          </div>
+                        <audio src={audioUrl} type="audio/mp3" autoPlay />
+                        {!isCameraEnabled ? <div className='p-5 bg-gray-200 px-10 rounded-lg absolute bottom-10 right-10'>
+                            <UserButton />
+                        </div> :
+                            <div className='absolute bottom-10 right-10'>
+                                <Webcam height={80}
+                                    width={130}
+                                    className='rounded-2xl'
+                                />
+                            </div>}
+                    </div>
           <div className="mt-5 flex items-center justify-center">
             {!enableMic ? (
               <Button onClick={connectToServer} disabled={loading}>

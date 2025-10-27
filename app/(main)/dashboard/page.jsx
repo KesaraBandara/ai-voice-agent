@@ -13,7 +13,7 @@ function Dashboard() {
         <Feedback />
       </div>
     </div>
-  );
+  )
 }
 
 export default Dashboard;

@@ -1,13 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { UserButton } from "@stackframe/stack";
 import Image from "next/image";
+import HeaderC from "./_components/HeaderC";
+import Hero from "./_components/Hero";
 
 export default function Home() {
   return (
     <div>
-      <h2>HII</h2>
-      <Button>Button</Button>
-      <UserButton/>
+      <HeaderC />
+      <Hero />
     </div>
   );
 }
