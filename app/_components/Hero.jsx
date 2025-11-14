@@ -12,7 +12,7 @@ function Hero() {
         <div className='flex flex-col items-center mt-20 px-10 md:px-20 lg:px-36 xl:px-52'>
             <div className="group max-w-md relative mx-auto flex items-center justify-center rounded-full px-4 
             py-1.5 shadow-[inset_0_-8px_10px_#8fdfff1f] transition-shadow duration-500 ease-out hover:shadow-[inset_0_-5px_10px_#8fdfff3f] ">
-                <span
+                {/* <span
                     className={
                         "absolute inset-0 block h-full w-full animate-gradient rounded-[inherit] bg-gradient-to-r from-[#ffaa40]/50 via-[#9c40ff]/50 to-[#ffaa40]/50 bg-[length:300%_100%] p-[1px]"
                     }
@@ -24,19 +24,19 @@ function Hero() {
                         maskComposite: "subtract",
                         WebkitClipPath: "padding-box",
                     }}
-                />
-                🎉 <hr className="mx-2 h-4 w-px shrink-0 bg-neutral-500" />
+                /> */}
+                {/* 🎉 <hr className="mx-2 h-4 w-px shrink-0 bg-neutral-500" /> */}
                 {/* <AnimatedGradientText className="text-sm font-medium">
                     Introducing Magic UI
                 </AnimatedGradientText> */}
-                <ChevronRight
+                {/* <ChevronRight
                     className="ml-1 size-4 stroke-neutral-500 transition-transform
  duration-300 ease-in-out group-hover:translate-x-0.5"
-                />
+                /> */}
             </div>
 
             <h1 className="text-4xl font-bold tracking-tighter md:text-5xl text-center mt-5 lg:text-7xl">
-                Revolutionize Learning with  AI-Powered Voice Agent 🎙️📚
+                Inspiring the Next Generation of Learners with AI Voice
             </h1>
 
             <Link href={'/dashboard'}>

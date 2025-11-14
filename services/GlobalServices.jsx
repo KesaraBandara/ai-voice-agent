@@ -38,6 +38,7 @@ export const AIModelToGenerateFeedbackAndNotes = async (coachingOption, conversa
 
     const completion = await openai.chat.completions.create({
         model: "openai/gpt-4o-mini",
+        //  model: "google/gemma-3-4b-it:free",
         messages: [
             ...conversation,
             { role: 'assistant', content: PROMPT },
